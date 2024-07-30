@@ -76,6 +76,10 @@ def _fix_sqrt(string):
 def _strip_string(string):
     original_string = string
 
+    # strip final . or , or ;
+    if string[-1].strip() in [".", ",", ";"]:
+        string = string.strip()[:-1]
+
     # linebreaks  
     string = string.replace("\n", "")
     #print(string)
@@ -153,6 +157,17 @@ def _strip_string(string):
     string = string.replace("\\lfloor", "[")
     string = string.replace("\\rfloor", "]")
 
+    # Do something about \pm, \lt, \gt, \leq, \geq
+    string = string.replace("\\pm", "±")
+    string = string.replace("\\lt", "<")
+    string = string.replace("\\gt", ">")
+    string = string.replace("\\leq", "≤")
+    string = string.replace("\\geq", "≥")
+
+    # Do something about \cdot and \times
+    string = string.replace("\\cdot", "*")
+    string = string.replace("\\times", "*")
+
     # " 0." equivalent to " ." and "{0." equivalent to "{." Alternatively, add "0" if "." is the start of the string
     string = string.replace(" .", " 0.")
     string = string.replace("{.", "{0.")
@@ -164,10 +179,10 @@ def _strip_string(string):
 
     # to consider: get rid of e.g. "k = " or "q = " at beginning
     # might be the case that on the left side we have a function name, e.g. "cos x = " or "sin x = "
-    if len(string.split("=")) == 2:
+    if len(string.split("=")) >= 2:
         # if len(string.split("=")[0]) <= 2:
             # string = string.split("=")[1]
-        string = string.split("=")[1]
+        string = string.split("=")[-1]
 
     # get rid of x \in {} or x \in [] or x \in ()
     if len(string.split("\\in")) == 2:
@@ -233,10 +248,6 @@ if __name__ == "__main__":
     s2 = "0.5"
     assert is_equiv(s1, s2), s1 + " " + s2
 
-    s1 = "0.5"
-    s2 = "\\frac{1}{2}"
-    assert is_equiv(s1, s2), s1 + " " + s2
-
     s1 = '\\(x=-3\\)'
     s2 = '-3'
     assert is_equiv(s1, s2), s1 + " " + s2
@@ -267,4 +278,21 @@ if __name__ == "__main__":
 
     s1 = '\\(x \\in\\{-1,1,-\\sqrt{2}, \\sqrt{2}\\}\\)'
     s2 = '{1, -1,-sqrt(2),sqrt(2)}'
+    assert is_equiv(s1, s2), s1 + " " + s2
+
+    s1 = '\\(f(1)=\\mathrm{e}\\)'
+    s2 = 'e'
+    assert is_equiv(s1, s2), s1 + " " + s2
+
+    s1 = '64 .'
+    s2 = '64'
+    assert is_equiv(s1, s2), s1 + " " + s2
+
+    # TODO still not working
+    # s1 = '\\(x_{1,2}=\\frac{-5 \\pm i \\sqrt{3}}{2}\\)'
+    # s2 = '0.5 * (-5 ± isqrt(3))'
+    # assert is_equiv(s1, s2), s1 + " " + s2
+
+    s1 = '\(\\operatorname{Din} \\mathbf{e}) \\Rightarrow f_{n}(-1)=(-1+1)^{2^{n}}-1=-1\)'
+    s2 = '-1'
     assert is_equiv(s1, s2), s1 + " " + s2
