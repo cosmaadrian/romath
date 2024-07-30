@@ -59,11 +59,11 @@ def _fix_sqrt(string):
 
     if not ("\\sqrt" in string or 'sqrt(' in string):
         return string
-    
+
     string = re.sub(r'sqrt\(([^)]*)\)', r'\\sqrt{\1}', string)
-    
+
     splits = string.split("\\sqrt")
-    new_string = splits[0] 
+    new_string = splits[0]
     for split in splits[1:]:
         if split[0] != "{":
             a = split[0]
@@ -80,7 +80,7 @@ def _strip_string(string):
     if string[-1].strip() in [".", ",", ";"]:
         string = string.strip()[:-1]
 
-    # linebreaks  
+    # linebreaks
     string = string.replace("\n", "")
     #print(string)
 
@@ -101,7 +101,7 @@ def _strip_string(string):
     string = string.replace("\\left", "")
     string = string.replace("\\right", "")
     #print(string)
-    
+
     # Remove circ (degrees)
     string = string.replace("^{\\circ}", "")
     string = string.replace("^\\circ", "")
@@ -111,7 +111,7 @@ def _strip_string(string):
 
     # remove math delimiters
     string = string.replace("\\(", "").replace("\\)", "").replace("\\[", "").replace('\\]', "")
-    
+
     # remove units (on the right)
     string = _remove_right_units(string)
 
@@ -127,7 +127,7 @@ def _strip_string(string):
     string = re.sub(r'\\textit{([^}]*)}', r'\1', string)
     string = re.sub(r'\\text{([^}]*)}', r'\1', string)
 
-    # Do something about \{ \} 
+    # Do something about \{ \}
     string = string.replace("\\{", "{").replace("\\}", "}")
 
     # Do something about cos, sin, tan, etc.
@@ -213,7 +213,7 @@ def _strip_string(string):
     # Notable cases: 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.25, 0.75, 0.125, 0.375, 0.625, 0.875
     known_fractions = {'0.1': '\\frac{1}{10}', '0.2': '\\frac{1}{5}', '0.4': '\\frac{2}{5}', '0.5': '\\frac{1}{2}', '0.6': '\\frac{3}{5}', '0.7': '\\frac{7}{10}', '0.8': '\\frac{4}{5}', '0.9': '\\frac{9}{10}', '0.25': '\\frac{1}{4}', '0.75': '\\frac{3}{4}', '0.125': '\\frac{1}{8}', '0.375': '\\frac{3}{8}', '0.625': '\\frac{5}{8}', '0.875': '\\frac{7}{8}'}
     if string in known_fractions:
-        string = known_fractions[string]    
+        string = known_fractions[string]
 
     # NOTE: X/Y changed to \frac{X}{Y} in dataset, but in simple cases fix in case the model output is X/Y
     string = _fix_a_slash_b(string)
@@ -223,18 +223,18 @@ def _strip_string(string):
 
     return string
 
-def is_equiv(str1, str2, verbose = True):
+def is_equivalent(str1, str2, verbose = True):
     if str1 is None and str2 is None:
         print("WARNING: Both None")
         return True
-    
+
     if str1 is None or str2 is None:
         return False
 
     try:
         ss1 = _strip_string(str1)
         ss2 = _strip_string(str2)
-        
+
         if verbose:
             print(ss1, ss2)
 
@@ -246,53 +246,53 @@ if __name__ == "__main__":
     # # Testing
     s1 = "\\frac{1}{2}"
     s2 = "0.5"
-    assert is_equiv(s1, s2), s1 + " " + s2
+    assert is_equivalent(s1, s2), s1 + " " + s2
 
     s1 = '\\(x=-3\\)'
     s2 = '-3'
-    assert is_equiv(s1, s2), s1 + " " + s2
+    assert is_equivalent(s1, s2), s1 + " " + s2
 
     s1 = '\\(\\operatorname{det}(\\mathrm{B})=3\\)'
     s2 = '\\mathrm{det}(\\mathrm{B})=3'
-    assert is_equiv(s1, s2), s1 + " " + s2
+    assert is_equivalent(s1, s2), s1 + " " + s2
 
     s1 = '\\(\\operatorname{det}(\\mathrm{B})=3\\)'
     s2 = 'det(B)=3'
-    assert is_equiv(s1, s2), s1 + " " + s2
+    assert is_equivalent(s1, s2), s1 + " " + s2
 
     s1 = '\\(\\cos x=-\\frac{4}{5}\\)'
     s2 = 'cos(x)=-0.8'
-    assert is_equiv(s1, s2), s1 + " " + s2
+    assert is_equivalent(s1, s2), s1 + " " + s2
 
     s1 = 'cos x = -\\frac{4}{5}'
     s2 = '-0.8'
-    assert is_equiv(s1, s2), s1 + " " + s2
+    assert is_equivalent(s1, s2), s1 + " " + s2
 
     s1 = '\\(\\lfloor\\sqrt{2}+\\sqrt{3}\\rfloor=3\\)'
     s2 = '3'
-    assert is_equiv(s1, s2), s1 + " " + s2
+    assert is_equivalent(s1, s2), s1 + " " + s2
 
     s1 = '\\(\\lfloor\\sqrt{2}+\\sqrt{3}\\rfloor\\)'
     s2 = '[sqrt(2)+sqrt(3)]'
-    assert is_equiv(s1, s2), s1 + " " + s2
+    assert is_equivalent(s1, s2), s1 + " " + s2
 
     s1 = '\\(x \\in\\{-1,1,-\\sqrt{2}, \\sqrt{2}\\}\\)'
     s2 = '{1, -1,-sqrt(2),sqrt(2)}'
-    assert is_equiv(s1, s2), s1 + " " + s2
+    assert is_equivalent(s1, s2), s1 + " " + s2
 
     s1 = '\\(f(1)=\\mathrm{e}\\)'
     s2 = 'e'
-    assert is_equiv(s1, s2), s1 + " " + s2
+    assert is_equivalent(s1, s2), s1 + " " + s2
 
     s1 = '64 .'
     s2 = '64'
-    assert is_equiv(s1, s2), s1 + " " + s2
+    assert is_equivalent(s1, s2), s1 + " " + s2
 
     # TODO still not working
     # s1 = '\\(x_{1,2}=\\frac{-5 \\pm i \\sqrt{3}}{2}\\)'
     # s2 = '0.5 * (-5 ± isqrt(3))'
-    # assert is_equiv(s1, s2), s1 + " " + s2
+    # assert is_equivalent(s1, s2), s1 + " " + s2
 
     s1 = '\(\\operatorname{Din} \\mathbf{e}) \\Rightarrow f_{n}(-1)=(-1+1)^{2^{n}}-1=-1\)'
     s2 = '-1'
-    assert is_equiv(s1, s2), s1 + " " + s2
+    assert is_equivalent(s1, s2), s1 + " " + s2
