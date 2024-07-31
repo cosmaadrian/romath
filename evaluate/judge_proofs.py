@@ -1,5 +1,10 @@
-import ollama
 import string
+import re
+import torch
+import transformers
+from transformers import pipeline
+from transformers import AutoModelForCausalLM
+
 from copy import deepcopy
 
 if __name__ == "__main__":
@@ -14,26 +19,40 @@ class SolutionJudge:
         super().__init__()
         self.model_name = model_name
 
-        self.llm_client = ollama.Client(host = 'http://localhost:11434')
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.model_name,
+            device_map = "auto",
+            torch_dtype = torch.float16,
+            trust_remote_code=True
+        )
+        self.tokenizer = transformers.AutoTokenizer.from_pretrained(self.model_name)
+        self.text_generator = pipeline("text-generation", model = self.model, tokenizer = self.tokenizer)
+
         self.template = EVALUATION_PROMPT
 
     def evaluate(self, question: str, true: str, prediction: str, has_single_answer: bool = False) -> int:
-        if has_single_answer: # TODO probably need to change this to a more robust check / extract the \boxed{} part, etc.
+        if has_single_answer:
+            if '\\boxed\{' in prediction:
+                prediction = re.sub(r'\\boxed\{(.+?)\}', r'\1', prediction)
+
             if is_equivalent(true, prediction):
                 return 1
             return 0
 
         messages = self._complete_prompts(question = question, true = true, prediction = prediction)
 
-        response = self.llm_client.chat(
-            model = self.model_name,
-            messages = messages
+        response = self.text_generator(
+            messages,
+            do_sample = False, max_new_tokens = 32, temperature = None, top_k = None, top_p = None
         )
 
-        content = response['message']['content'].strip()
+        content = response[0]['generated_text'][-1]['content']
 
         try:
-            score = int(re.findall(r'\d+', content)[0])
+            score = int(re.findall(r'\d+.?\d+', content))
+            if score >= 1 or score <= 0:
+                raise Exception(score)
+
             return score
         except Exception as e:
             print(f"WARNING: Could not extract score from the response. ({content})")
@@ -99,6 +118,6 @@ EVALUATION_PROMPT = [
 ]
 
 if __name__ == "__main__":
-    judge = SolutionJudge(model_name = 'phi3')
-    response = judge.evaluate(question="What is the sum of 2 and 2?", true = "4", prediction = "4", has_single_answer = False)
+    judge = SolutionJudge(model_name = "Qwen/Qwen2-1.5B-Instruct")
+    response = judge.evaluate(question="What is the sum of 2 and 3?", true = "5", prediction = "4", has_single_answer = False)
     print(response)
