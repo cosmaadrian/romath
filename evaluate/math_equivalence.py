@@ -76,6 +76,8 @@ def _fix_sqrt(string):
 def _strip_string(string):
     original_string = string
 
+    string = string.lower()
+
     # strip final . or , or ;
     if string[-1].strip() in [".", ",", ";"]:
         string = string.strip()[:-1]
@@ -96,6 +98,24 @@ def _strip_string(string):
     string = string.replace("tfrac", "frac")
     string = string.replace("dfrac", "frac")
     #print(string)
+
+    # replace numbers with their actual values
+    string = string.replace("doua", "2") 
+    string = string.replace("doi", "2") 
+    string = string.replace("a doua", "2")
+    string = string.replace("al doilea", "2")
+    string = string.replace("trei", "3")
+    string = string.replace("a treia", "3")
+    string = string.replace("al treilea", "3")
+    string = string.replace("patru", "4")
+    string = string.replace("a patra", "4")
+    string = string.replace("al patrulea", "4")
+    string = string.replace("cinci", "5")
+    string = string.replace("sase", "6")
+    string = string.replace("sapte", "7")
+    string = string.replace("opt", "8")
+    string = string.replace("noua", "9")
+    string = string.replace("zece", "10")
 
     # remove \left and \right
     string = string.replace("\\left", "")
@@ -179,9 +199,10 @@ def _strip_string(string):
 
     # to consider: get rid of e.g. "k = " or "q = " at beginning
     # might be the case that on the left side we have a function name, e.g. "cos x = " or "sin x = "
-    if len(string.split("=")) >= 2:
-        # if len(string.split("=")[0]) <= 2:
-            # string = string.split("=")[1]
+    if len(string.split(",")) == (len(string.split("=")) - 1) and len(string.split(",")) > 1 and len(string.split("=")) > 2:
+        # 'a=2, b=3, c=4' --> '2,3,4'
+        string = ",".join([x.split("=")[-1] for x in string.split(",")])
+    elif len(string.split("=")) >= 2:
         string = string.split("=")[-1]
 
     # get rid of x \in {} or x \in [] or x \in ()
@@ -221,6 +242,28 @@ def _strip_string(string):
     if has_negative_sign:
         string = "-" + string
 
+    # 25ani --> 25
+    if re.sub(r'[a-zăâîșț]*\d+[a-zăâîșț]+' , '', string) == '':
+        string = re.sub(r'[a-zăâîșț]+' , '', string).strip()
+        
+    # '672, 671 respectiv 669 monede' --> '669,671,672'
+    if re.sub(r'\d+[^0-9]+', '', string) == '' and '*' not in string and '^' not in string and '/' not in string and '+' not in string and '-' not in string:
+        print('###', string)
+        string = ",".join(sorted(re.findall(r'\d+', string)))
+
+    # 'AAAAASSB și SSSSSALL' --> 'AAAAASSB,SSSSSALL'
+    if 'și' in string:
+        string = ",".join(sorted(string.split('și')))
+
+    # '6928*d*i**2*v-35616*i**3*v' --> '6928\cdot d\cdot i^{2}\cdot v - 35616\cdot i^{3}\cdot v'
+    if '*' in string:
+        string = string.replace('**', '^').replace('*', '\cdot ')
+        if "^" in string and "^{" not in string:
+            string = re.sub(r"\^\d+", lambda x: "^{" + x.group()[1:] + "}", string)
+    
+    #remove space before and after '-', '+', '*', '/'
+    string = string.replace(' -', '-').replace(' +', '+').replace(' *', '*').replace(' /', '/').replace('- ', '-').replace('+ ', '+').replace('* ', '*').replace('/ ', '/')
+
     return string
 
 def is_equivalent(str1, str2, verbose = True):
@@ -239,7 +282,8 @@ def is_equivalent(str1, str2, verbose = True):
             print(ss1, ss2)
 
         return ss1 == ss2
-    except:
+    except Exception as e:
+        print(e)
         return str1 == str2
 
 if __name__ == "__main__":
@@ -295,4 +339,48 @@ if __name__ == "__main__":
 
     s1 = '\(\\operatorname{Din} \\mathbf{e}) \\Rightarrow f_{n}(-1)=(-1+1)^{2^{n}}-1=-1\)'
     s2 = '-1'
+    assert is_equivalent(s1, s2), s1 + " " + s2
+
+    s1 = 'a=2, b=3, c=4'
+    s2 = '2,3,4'
+    assert is_equivalent(s1, s2), s1 + " " + s2
+
+    s1 = 'a=2015, b=2016, c=2017, d=2011.'
+    s2 = '2015,2016,2017,2011'
+    assert is_equivalent(s1, s2), s1 + " " + s2
+
+    s1 = '25ani'
+    s2 = '25'
+    assert is_equivalent(s1, s2), s1 + " " + s2
+
+    s1 = '49 de triunghiuri ca în enunț'
+    s2 = '49'
+    assert is_equivalent(s1, s2), s1 + " " + s2
+
+    # s1 = 'x=10, y=20, sau x=20, y=10'
+    # s2 = '10,20'
+    # assert is_equivalent(s1, s2), s1 + " " + s2
+
+    s1 = '672, 671 respectiv 669 monede'
+    s2 = '669,671,672'
+    assert is_equivalent(s1, s2), s1 + " " + s2
+
+    s1 = 'AAAAASSB și SSSSSALL'
+    s2 = 'AAAAASSB,SSSSSALL'
+    assert is_equivalent(s1, s2), s1 + " " + s2
+
+    s1 = 'în a treia săptămâna'
+    s2 = '3'
+    assert is_equivalent(s1, s2), s1 + " " + s2
+
+    s1 = "doi, trei"
+    s2 = "2,3"
+    assert is_equivalent(s1, s2), s1 + " " + s2
+
+    s1 = '-6/17'
+    s2 = '-\\frac{6}{17}'
+    assert is_equivalent(s1, s2), s1 + " " + s2
+
+    s1 = '6928*d*i**2*v - 35616*i**3*v'
+    s2 = '6928\cdot d\cdot i^{2}\cdot v - 35616\cdot i^{3}\cdot v'
     assert is_equivalent(s1, s2), s1 + " " + s2
