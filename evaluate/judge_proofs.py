@@ -4,15 +4,10 @@ import torch
 import transformers
 from transformers import pipeline
 from transformers import AutoModelForCausalLM
-
+import re
 from copy import deepcopy
 
-if __name__ == "__main__":
-    from math_equivalence import is_equivalent
-else:
-    from evaluate.math_equivalence import is_equivalent
-
-import re
+from math_equivalence import is_equivalent
 
 class SolutionJudge:
     def __init__(self, model_name):
@@ -49,12 +44,13 @@ class SolutionJudge:
         content = response[0]['generated_text'][-1]['content']
 
         try:
-            score = int(re.findall(r'\d+.?\d+', content))
-            if score >= 1 or score <= 0:
+            score = int(re.search(r'\d', content).group())
+            if score != 1 and score != 0:
                 raise Exception(score)
 
             return score
         except Exception as e:
+            print(f"Exception: {e}")
             print(f"WARNING: Could not extract score from the response. ({content})")
             return -1
 
