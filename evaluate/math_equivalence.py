@@ -213,7 +213,6 @@ def _strip_string(string):
 
     # if it is a set, order the elements and remove spaces
     if string[0] == '{' and string[-1] == '}':
-        print('###', string)
         string = "{" + ",".join(
             sorted(map(lambda x: x.strip(), string[1:-1].split(",")))
         ) + "}"
@@ -248,7 +247,6 @@ def _strip_string(string):
         
     # '672, 671 respectiv 669 monede' --> '669,671,672'
     if re.sub(r'\d+[^0-9]+', '', string) == '' and '*' not in string and '^' not in string and '/' not in string and '+' not in string and '-' not in string:
-        print('###', string)
         string = ",".join(sorted(re.findall(r'\d+', string)))
 
     # 'AAAAASSB și SSSSSALL' --> 'AAAAASSB,SSSSSALL'
@@ -266,7 +264,7 @@ def _strip_string(string):
 
     return string
 
-def is_equivalent(str1, str2, verbose = True):
+def is_equivalent(str1, str2, verbose = False):
     if str1 is None and str2 is None:
         print("WARNING: Both None")
         return True
