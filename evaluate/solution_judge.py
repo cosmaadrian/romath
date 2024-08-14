@@ -1,11 +1,12 @@
 import re
 import torch
+import pprint
 import transformers
 from transformers import pipeline
 from transformers import AutoModelForCausalLM
 import re
 
-from math_equivalence import is_equivalent
+from evaluate.math_equivalence import is_equivalent
 
 from .utils import complete_prompts
 
@@ -37,21 +38,19 @@ class SolutionJudge:
 
     def evaluate(self, question: str, true: str, prediction: str, has_single_answer: bool = False) -> int:
         if has_single_answer:
-            if '\\boxed\{' in prediction:
+            if r'\boxed{' in prediction:
                 prediction = re.sub(r'\\boxed\{(.+?)\}', r'\1', prediction)
+                return int(is_equivalent(true, prediction))
 
-            if is_equivalent(true, prediction):
-                return 1
-            return 0
-
+            # if the prediction does not contain the boxed format, we will check the whole output
         messages = complete_prompts(self.template, question = question, true = true, prediction = prediction)
-
         response = self.text_generator(
             messages,
             do_sample = False, max_new_tokens = 32, temperature = None, top_k = None, top_p = None
         )
 
         content = response[0]['generated_text'][-1]['content']
+        # pprint.pprint(content)
 
         try:
             score = int(re.search(r'\d', content).group())

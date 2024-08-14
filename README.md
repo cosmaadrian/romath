@@ -17,7 +17,3 @@ python evaluate.py --pred_file results/Qwen-Qwen2-1.5B-Instruct_bac_2_0.5.csv --
 ```
 python evaluate/compute_metrics.py --input_dir results/ --output_dir metrics/
 ```
-
-### TODO
-
-- [ ] add the `judge_dataset.csv` into this repo

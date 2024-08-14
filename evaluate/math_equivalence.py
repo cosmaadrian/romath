@@ -1,7 +1,7 @@
 """
     This script contains the function is_equivalent that compares two math strings and returns True if they are equivalent.
 """
-
+import traceback
 import re
 
 def _fix_fracs(string):
@@ -285,6 +285,7 @@ def is_equivalent(str1, str2, verbose = False):
         return ss1 == ss2
     except Exception as e:
         print(e)
+        print(traceback.format_exc())
         return str1 == str2
 
 if __name__ == "__main__":

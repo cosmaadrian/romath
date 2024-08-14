@@ -27,12 +27,14 @@ from evaluate.prompts.prediction_prompt import PROMPT
 parser = argparse.ArgumentParser(description='Predict on dataset')
 parser.add_argument('--model', type = str, default = 'Qwen/Qwen2-1.5B-Instruct', help = 'Model name')
 parser.add_argument('--dataset', type = str, default = 'bac', help = 'Dataset name. (synthetic / bac / comps)')
-parser.add_argument('--output', type = str, default = 'results/', help = 'Output folder.')
+parser.add_argument('--output', type = str, default = 'predictions/', help = 'Output folder.')
 
 parser.add_argument('--shots', type = int, default = 0, help = 'Number of examples in the prompt.')
-parser.add_argument('--k', type = int, default = 1, help = 'Number of predictions to make (for pass@k / acc@k).')
+parser.add_argument('--k', type = int, default = 1, help = 'Number of predictions to make (for acc@k).')
 parser.add_argument('--temperature', type = float, default = 0.0, help = 'Temperature of model.')
 args = parser.parse_args()
+
+print("Running predictions for", args.__dict__)
 
 HF_TOKEN = os.environ.get('HF_TOKEN', None)
 
@@ -105,12 +107,13 @@ for i, example in enumerate(tqdm.tqdm(test_dataset, total = len(test_dataset), p
 
         content = response[0]['generated_text'][-1]['content']
         outputs['idx'].append(example['idx'])
-        outputs['model_name'].append(args.model)
+        outputs['model'].append(args.model)
         outputs['dataset'].append(args.dataset)
+        outputs['domain'].append(example['domain'])
         outputs['temperature'].append(args.temperature)
         outputs['shots'].append(args.shots)
 
-        outputs['question'].append(question)
+        outputs['problem'].append(question)
         outputs['solution'].append(solution)
         outputs['answer'].append(example['answer'])
         outputs['response'].append(content)
