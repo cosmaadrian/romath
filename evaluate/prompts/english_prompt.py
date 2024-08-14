@@ -19,9 +19,7 @@ PROMPT = [
         Please evaluate the student's response with precision to ensure accurate and fair grading.
         """
     },
-    {"role": "user", "content":
-    """
-    The student answer is {prediction}.
-    """
+    {
+        "role": "user", "content": "The student answer is {prediction}.",
     }
 ]

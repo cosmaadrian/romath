@@ -1,13 +1,13 @@
-import string
 import re
 import torch
 import transformers
 from transformers import pipeline
 from transformers import AutoModelForCausalLM
 import re
-from copy import deepcopy
 
 from math_equivalence import is_equivalent
+
+from .utils import complete_prompts
 
 from evaluate.prompts.english_prompt import PROMPT as ENGLISH_PROMPT
 from evaluate.prompts.romanian_prompt import PROMPT as ROMANIAN_PROMPT
@@ -28,7 +28,7 @@ class SolutionJudge:
             self.model_name,
             device_map = "auto",
             torch_dtype = torch.float16,
-            trust_remote_code=True
+            trust_remote_code = True
         )
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(self.model_name)
         self.text_generator = pipeline("text-generation", model = self.model, tokenizer = self.tokenizer)
@@ -44,7 +44,7 @@ class SolutionJudge:
                 return 1
             return 0
 
-        messages = self._complete_prompts(question = question, true = true, prediction = prediction)
+        messages = complete_prompts(self.template, question = question, true = true, prediction = prediction)
 
         response = self.text_generator(
             messages,
@@ -63,36 +63,6 @@ class SolutionJudge:
             print(f"Exception: {e}")
             print(f"WARNING: Could not extract score from the response. ({content})")
             return -1
-
-    def _complete_prompts(self, **kwargs) -> list:
-        if type(self.template) is list:
-            current_messages = deepcopy(self.template)
-            for i in range(len(current_messages)):
-
-                if isinstance(current_messages[i]['content'], str):
-                    try:
-                        current_messages[i]['content'] = current_messages[i]['content'].format(**kwargs)
-                    except KeyError:
-                        variables = self.get_variables_from_fstring(current_messages[i]['content'])
-                        not_provided = [var for var in variables if var not in kwargs]
-                        raise ValueError(f"Missing required arguments: {not_provided} when calling the LLMAgent.")
-                elif isinstance(current_messages[i]['content'], list):
-                    for j in range(len(current_messages[i]['content'])):
-                        try:
-                            current_messages[i]['content'][j]['content'] = current_messages[i]['content'][j][
-                                'content'].format(**kwargs)
-                        except KeyError:
-                            variables = self.get_variables_from_fstring(current_messages[i]['content'][j]['content'])
-                            not_provided = [var for var in variables if var not in kwargs]
-                            raise ValueError(f"Missing required arguments: {not_provided} when calling the LLMAgent.")
-            return current_messages
-
-    @staticmethod
-    def get_variables_from_fstring(fstring):
-        formatter = string.Formatter()
-        return [name for _, name, _, _ in formatter.parse(fstring) if name is not None]
-
-
 
 if __name__ == "__main__":
     judge = SolutionJudge(model_name = "Qwen/Qwen2-1.5B-Instruct")

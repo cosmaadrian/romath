@@ -1,8 +1,8 @@
 """
-This script (roughly) evaluates the performance of the Judge model to verify proofs in Romanian.
-Uses the SolutionJudge class from judge_proofs.py to evaluate the predictions.
+    This script (roughly) evaluates the performance of the Judge model to verify proofs in Romanian.
+    Uses the SolutionJudge class from judge_proofs.py to evaluate the predictions.
 
-It only outputs predictions and does not compute any metrics. To compute metrics, use evaluate/compute_performance_metrics.py.
+    It only outputs predictions and does not compute any metrics. To compute metrics, use evaluate/compute_performance_metrics.py.
 """
 
 import os
@@ -29,7 +29,10 @@ def make_predictions(romath_judge_df, judge):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Annotate answer')
+
+    # The dataset is a .csv file purposely constructed, not one from huggingface!
     parser.add_argument('--dataset', type=str, help='Dataset path')
+
     parser.add_argument('--model', type=str, help='Model name')
     parser.add_argument('--prompt', type=str, help='Prompt language (en/ro)')
     parser.add_argument('--output_dir', type=str, help='Output path')

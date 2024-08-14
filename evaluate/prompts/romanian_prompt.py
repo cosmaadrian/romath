@@ -18,9 +18,7 @@ PROMPT = [
         Te rog să evaluezi răspunsul studentului cu precizie pentru a asigura o evaluare exactă și corectă.
         """
     },
-    {"role": "user", "content":
-    """
-    Răspunsul studentului este {prediction}.
-    """
+    {
+        "role": "user", "content": "Răspunsul studentului este {prediction}."
     }
 ]

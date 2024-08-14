@@ -1,4 +1,7 @@
-# TODO check out if this makes sense for our data
+"""
+    This script contains the function is_equivalent that compares two math strings and returns True if they are equivalent.
+"""
+
 import re
 
 def _fix_fracs(string):
@@ -100,8 +103,8 @@ def _strip_string(string):
     #print(string)
 
     # replace numbers with their actual values
-    string = string.replace("doua", "2") 
-    string = string.replace("doi", "2") 
+    string = string.replace("doua", "2")
+    string = string.replace("doi", "2")
     string = string.replace("a doua", "2")
     string = string.replace("al doilea", "2")
     string = string.replace("trei", "3")
@@ -244,7 +247,7 @@ def _strip_string(string):
     # 25ani --> 25
     if re.sub(r'[a-zăâîșț]*\d+[a-zăâîșț]+' , '', string) == '':
         string = re.sub(r'[a-zăâîșț]+' , '', string).strip()
-        
+
     # '672, 671 respectiv 669 monede' --> '669,671,672'
     if re.sub(r'\d+[^0-9]+', '', string) == '' and '*' not in string and '^' not in string and '/' not in string and '+' not in string and '-' not in string:
         string = ",".join(sorted(re.findall(r'\d+', string)))
@@ -258,7 +261,7 @@ def _strip_string(string):
         string = string.replace('**', '^').replace('*', '\cdot ')
         if "^" in string and "^{" not in string:
             string = re.sub(r"\^\d+", lambda x: "^{" + x.group()[1:] + "}", string)
-    
+
     #remove space before and after '-', '+', '*', '/'
     string = string.replace(' -', '-').replace(' +', '+').replace(' *', '*').replace(' /', '/').replace('- ', '-').replace('+ ', '+').replace('* ', '*').replace('/ ', '/')
 

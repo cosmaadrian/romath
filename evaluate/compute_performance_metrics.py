@@ -12,7 +12,6 @@ parser.add_argument('--evaluate_judge', action = 'store_false', help = 'Whether 
 parser.add_argument('--output_dir', type=str, help='Output path')
 args = parser.parse_args()
 
-
 def compute_classification_metrics(true, pred):
     accuracy = accuracy_score(true, pred)
     precision = precision_score(true, pred)
@@ -38,7 +37,7 @@ def compute_accuracy_at_k(true, preds, k):
 # concatenate all the results that we have
 results = pd.concat([pd.read_csv(file) for file in glob(f'{args.input_dir}/predictions_*.csv')]).reset_index(drop = True)
 
-# considering -1 predictions as incorrect. TODO: any better idea?
+# considering -1 predictions as incorrect. Any better idea?
 results['judge_pred'] = results['judge_pred'].apply(lambda x: 0 if x == -1 else x)
 
 
