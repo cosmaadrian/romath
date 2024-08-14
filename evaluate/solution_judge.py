@@ -9,11 +9,17 @@ from copy import deepcopy
 
 from math_equivalence import is_equivalent
 
-from english_prompt import PROMPT as ENGLISH_PROMPT
-from romanian_prompt import PROMPT as ROMANIAN_PROMPT
-
+from evaluate.prompts.english_prompt import PROMPT as ENGLISH_PROMPT
+from evaluate.prompts.romanian_prompt import PROMPT as ROMANIAN_PROMPT
 
 class SolutionJudge:
+    """
+        A class checks the correctness of a solution to a problem.
+        It uses either `math_equivalence.py` for solutions that are not proofs (have a single final answer)
+            or using a target LLM for judging the correctness of proofs.
+
+        Problems that have single answers should have their generated final answers contained in a boxed format (`\boxed{<answer>}`), otherwise it will check the whole output.
+    """
     def __init__(self, model_name, prompt):
         super().__init__()
         self.model_name = model_name
