@@ -61,9 +61,9 @@ def populate_few_shot(template, train_dataset, shots = 0):
             f"""Care este rezolvarea următoarei probleme?\n{example['problem']}"""
         })
 
-        content = f"{example['solution']}"
+        content = f"Soluția este: {example['solution']}"
         if example['answer'] != 'Proof':
-            content = f"{example['solution']}. Răspunsul final este: \\boxed{{{example['answer']}}}"
+            content = f"Soluția este: {example['solution']}. Răspunsul final este: \\boxed{{{example['answer']}}}"
 
         shot_list.append({
             "role": "assistant",
