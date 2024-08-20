@@ -44,9 +44,6 @@ def compute_accuracy_at_k(true, preds_df, k):
     correct_predictions = np.ones_like(predictions)
     acc = accuracy_score(correct_predictions, predictions)
 
-    if k == 1:
-        print(acc)
-
     return {f'accuracy@{k}': acc}
 
 # concatenate all the results that we have

@@ -35,4 +35,4 @@ shots = prediction_df['shots'].unique()[0]
 temperature = prediction_df['temperature'].unique()[0]
 
 os.makedirs(args.output, exist_ok = True)
-prediction_df.to_csv(f'{args.output}/results_{model_name.replace("/", "-")}_{dataset}_{shots}_{temperature}.csv', index = False)
+prediction_df.to_csv(f'{args.output}/{model_name.replace("/", "-")}_{dataset}_{shots}_{temperature}.csv', index = False)
