@@ -95,8 +95,8 @@ model = get_peft_model(model, peft_config)
 model.print_trainable_parameters()
 
 # Load dataset
-train_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 'train')
-test_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 'test')
+train_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 'train', token = HF_TOKEN)
+test_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 'test', token = HF_TOKEN)
 
 #################
 train_dataset = train_dataset.take(128)
