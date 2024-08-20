@@ -10,8 +10,8 @@ from evaluate.math_equivalence import is_equivalent
 
 from .utils import complete_prompts
 
-from evaluate.prompts.english_prompt import PROMPT as ENGLISH_PROMPT
-from evaluate.prompts.romanian_prompt import PROMPT as ROMANIAN_PROMPT
+from evaluate.prompts.judge_english_prompt import PROMPT as ENGLISH_PROMPT
+from evaluate.prompts.judge_romanian_prompt import PROMPT as ROMANIAN_PROMPT
 
 class SolutionJudge:
     """

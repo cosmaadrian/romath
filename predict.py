@@ -73,6 +73,8 @@ def populate_few_shot(template, train_dataset, shots = 0):
     final_template = system_prompt + shot_list + final_prompt
     return final_template
 
+
+# TODO check if is PEFT model and use the correct model class
 model = AutoModelForCausalLM.from_pretrained(
     args.model,
     token = HF_TOKEN,

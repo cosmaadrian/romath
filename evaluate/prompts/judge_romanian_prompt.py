@@ -20,8 +20,7 @@ Problema de matematică este:
 Soluția corectă din baremul de corectare este:
 {true}.
 
-Te rog să evaluezi soluția studentului cu precizie pentru a asigura o evaluare exactă și corectă.
-"""
+Te rog să evaluezi soluția studentului cu precizie pentru a asigura o evaluare exactă și corectă."""
     },
     {
         "role": "user", "content": "Soluția studentului este {prediction}. Furnizează un doar scor de '0' sau '1', unde '0' semnifică o soluție greșită, iar '1' semnifică o soluție corectă. Bazează-ți evaluarea pe criteriile de evaluare furnizate si pe soluția corecta din barem.",
