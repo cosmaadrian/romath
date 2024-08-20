@@ -1,3 +1,3 @@
 #!/bin/bash
 
-apptainer exec --nv ~/singularity-stuff/sandbox ./run.sh
+apptainer exec --nv ~/singularity-stuff/sandbox $1

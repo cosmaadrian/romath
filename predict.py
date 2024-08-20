@@ -43,6 +43,7 @@ def populate_few_shot(template, train_dataset, shots = 0):
         Populates a few shot template with examples from the dataset. The same example for all models / setups.
     """
     template = deepcopy(template)
+    # TODO add the "Solutia este" part at the end of the prompt
 
     if shots == 0:
         return template
@@ -61,9 +62,9 @@ def populate_few_shot(template, train_dataset, shots = 0):
             f"""Care este rezolvarea următoarei probleme?\n{example['problem']}"""
         })
 
-        content = f"Soluția este: {example['solution']}"
+        content = f"Soluția este:\n{example['solution']}"
         if example['answer'] != 'Proof':
-            content = f"Soluția este: {example['solution']}. Răspunsul final este: \\boxed{{{example['answer']}}}"
+            content = f"Soluția este:\n{example['solution']}. Răspunsul final este: \\boxed{{{example['answer']}}}"
 
         shot_list.append({
             "role": "assistant",
@@ -73,16 +74,18 @@ def populate_few_shot(template, train_dataset, shots = 0):
     final_template = system_prompt + shot_list + final_prompt
     return final_template
 
-
 # TODO check if is PEFT model and use the correct model class
 model = AutoModelForCausalLM.from_pretrained(
     args.model,
     token = HF_TOKEN,
     device_map = "auto",
-    torch_dtype = torch.float16, # TODO? use 8-bit if available?
+    load_in_8bit = True,
     trust_remote_code = True
 )
 tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, token = HF_TOKEN)
+
+# TODO not sure if it's ok to use the text-generation pipeline
+# Check the input format for the instruct model?
 text_generator = pipeline("text-generation", model = model, tokenizer = tokenizer)
 
 # Load dataset
