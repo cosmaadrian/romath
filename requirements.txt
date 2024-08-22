@@ -1,3 +1,11 @@
 torch
 datasets
 transformers
+peft
+trl
+tqdm
+pandas
+numpy
+scikit-learn
+nltk
+wandb

@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+cd ..
 
 # Evaluate a bunch of judges (ro prompt)
 # meta-llama/Meta-Llama-3-70B-Instruct

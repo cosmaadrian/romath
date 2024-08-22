@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+cd ..
 
 # Model: microsoft/Phi-3-mini-4k-instruct (3.8B params)
 python fine_tune.py --batch_size 4 --dataset bac --model microsoft/Phi-3-mini-4k-instruct
