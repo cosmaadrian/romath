@@ -28,7 +28,7 @@ def make_predictions(romath_judge_df, judge):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Annotate answer')
+    parser = argparse.ArgumentParser(description='Evaluate Judge.')
 
     # The dataset is a .csv file purposely constructed, not one from huggingface!
     parser.add_argument('--dataset', type=str, help='Dataset path')
@@ -47,8 +47,8 @@ if __name__ == '__main__':
 
     prediction_df['model'] = args.model
     prediction_df['prompt'] = args.prompt
-    prediction_df = prediction_df[['idx', 'domain', 'judge_pred', 'is_correct', 'reason', 'model', 'prompt']]
+    prediction_df = prediction_df[['idx', 'model', 'prompt', 'domain', 'judge_pred', 'is_correct', 'reason']]
 
     os.makedirs(args.output_dir, exist_ok = True)
-    prediction_df.to_csv(f'{args.output_dir}/predictions_{args.model.replace("/", "_")}_{args.prompt}.csv', index = False)
+    prediction_df.to_csv(f'{args.output_dir}/judge-predictions-{args.model.replace("/", "_")}_{args.prompt}.csv', index = False)
 

@@ -3,6 +3,7 @@ predictions/
 results/
 metrics/
 wandb/
+notebooks/
 slurm-*.out
 
 # Byte-compiled / optimized / DLL files

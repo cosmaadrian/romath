@@ -62,6 +62,7 @@ def populate_few_shot(template, train_dataset, shots = 0):
             f"""Care este rezolvarea următoarei probleme?\n{example['problem']}"""
         })
 
+        # TODO
         content = f"Soluția este:\n{example['solution']}"
         if example['answer'] != 'Proof':
             content = f"Soluția este:\n{example['solution']}. Răspunsul final este: \\boxed{{{example['answer']}}}"
@@ -84,15 +85,12 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, token = HF_TOKEN)
 
-# TODO not sure if it's ok to use the text-generation pipeline
-# Check the input format for the instruct model?
 text_generator = pipeline("text-generation", model = model, tokenizer = tokenizer)
 
 # Load dataset
 train_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 'train')
 test_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 'test')
 
-# test_dataset = test_dataset.take(10)
 
 outputs = defaultdict(list)
 

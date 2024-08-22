@@ -84,6 +84,7 @@ model = transformers.AutoModelForCausalLM.from_pretrained(
 model.enable_input_require_grads()
 
 tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, token = HF_TOKEN, padding_size = 'left' if 'mistralai' in args.model else 'right')
+tokenizer.pad_token = tokenizer.eos_token
 
 # Load dataset
 train_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 'train', token = HF_TOKEN)
@@ -119,7 +120,7 @@ training_args = SFTConfig(
     per_device_train_batch_size = args.batch_size,
     per_device_eval_batch_size = args.batch_size,
 
-    num_train_epochs = 2,
+    num_train_epochs = 3,
     weight_decay = 0.01,
 
     bf16 = True,
@@ -127,11 +128,8 @@ training_args = SFTConfig(
 
     save_total_limit = 1,
 
-    eval_strategy = "steps",
-    eval_steps = 256,
-
-    save_strategy = "steps",
-    save_steps = 256,
+    eval_strategy = "epoch",
+    save_strategy = "epoch",
 
     load_best_model_at_end = False,
     push_to_hub = False,
@@ -139,10 +137,19 @@ training_args = SFTConfig(
     packing = False,
 )
 
-collator = DataCollatorForCompletionOnlyLM(
-    response_template = '### Soluția este:\n',
-    tokenizer = tokenizer
-)
+# Handle this separately, tokenization is the root of all evil.
+if args.model == 'OpenLLM-Ro/RoMistral-7b-Instruct':
+    token_ids_template = tokenizer.encode('\n### Soluția este:\n', add_special_tokens = False)[1:]
+    collator = DataCollatorForCompletionOnlyLM(
+        response_template = token_ids_template,
+        tokenizer = tokenizer
+    )
+
+else:
+    collator = DataCollatorForCompletionOnlyLM(
+        response_template = '### Soluția este:\n',
+        tokenizer = tokenizer
+    )
 
 trainer = SFTTrainer(
     model = model,
