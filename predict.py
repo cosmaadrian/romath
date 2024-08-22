@@ -17,6 +17,7 @@ import pprint
 
 from copy import deepcopy
 from evaluate.utils import complete_prompts
+from peft import AutoPeftModelForCausalLM
 
 import transformers
 from transformers import pipeline
@@ -43,7 +44,6 @@ def populate_few_shot(template, train_dataset, shots = 0):
         Populates a few shot template with examples from the dataset. The same example for all models / setups.
     """
     template = deepcopy(template)
-    # TODO add the "Solutia este" part at the end of the prompt
 
     if shots == 0:
         return template
@@ -62,10 +62,9 @@ def populate_few_shot(template, train_dataset, shots = 0):
             f"""Care este rezolvarea următoarei probleme?\n{example['problem']}"""
         })
 
-        # TODO
-        content = f"Soluția este:\n{example['solution']}"
+        content = f"\n### Soluția este:\n{example['solution']}"
         if example['answer'] != 'Proof':
-            content = f"Soluția este:\n{example['solution']}. Răspunsul final este: \\boxed{{{example['answer']}}}"
+            content = f"\n### Soluția este:\n{example['solution']}. Răspunsul final este: \\boxed{{{example['answer']}}}"
 
         shot_list.append({
             "role": "assistant",
@@ -75,14 +74,25 @@ def populate_few_shot(template, train_dataset, shots = 0):
     final_template = system_prompt + shot_list + final_prompt
     return final_template
 
-# TODO check if is PEFT model and use the correct model class
-model = AutoModelForCausalLM.from_pretrained(
-    args.model,
-    token = HF_TOKEN,
-    device_map = "auto",
-    load_in_8bit = True,
-    trust_remote_code = True
-)
+is_fine_tuned = os.path.exists(args.model)
+
+if is_fine_tuned:
+    model = AutoPeftModelForCausalLM.from_pretrained(
+        args.model,
+        token = HF_TOKEN,
+        device_map = "auto",
+        load_in_8bit = True,
+        trust_remote_code = True
+    )
+else:
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model,
+        token = HF_TOKEN,
+        device_map = "auto",
+        load_in_8bit = True,
+        trust_remote_code = True
+    )
+
 tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, token = HF_TOKEN)
 
 text_generator = pipeline("text-generation", model = model, tokenizer = tokenizer)
@@ -90,7 +100,6 @@ text_generator = pipeline("text-generation", model = model, tokenizer = tokenize
 # Load dataset
 train_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 'train')
 test_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 'test')
-
 
 outputs = defaultdict(list)
 
@@ -115,6 +124,7 @@ for i, example in enumerate(tqdm.tqdm(test_dataset, total = len(test_dataset), p
         outputs['domain'].append(example['domain'])
         outputs['temperature'].append(args.temperature)
         outputs['shots'].append(args.shots)
+        outputs['fine-tuned'].append(is_fine_tuned)
 
         outputs['problem'].append(question)
         outputs['solution'].append(solution)
@@ -123,5 +133,9 @@ for i, example in enumerate(tqdm.tqdm(test_dataset, total = len(test_dataset), p
 
 df = pd.DataFrame(outputs)
 
+model_name = args.model.replace('/', '-')
+if is_fine_tuned:
+    model_name = os.path.basename(args.model)
+
 os.makedirs(args.output, exist_ok = True)
-df.to_csv(f"{args.output}/{args.model.replace('/', '-')}_{args.dataset}_{args.shots}_{args.temperature}.csv", index = False)
+df.to_csv(f"{args.output}/{model_name}_{args.dataset}_{args.shots}_{args.temperature}.csv", index = False)

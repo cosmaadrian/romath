@@ -39,6 +39,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    print("Running Judge Predictions for", args.__dict__)
+
     romath_judge_df = pd.read_csv(args.dataset)
     romath_judge_df = romath_judge_df
 
