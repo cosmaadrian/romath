@@ -4,6 +4,11 @@ import random
 import nltk
 import re
 import argparse
+import os
+
+import datasets
+
+HF_TOKEN = os.environ.get('HF_TOKEN', None)
 
 parser = argparse.ArgumentParser(description='Make the dataset to evaluate the correctness of the Judge.')
 parser.add_argument('--n_samples', type = int, default = 150, help = 'Number of samples to take from each dataset.')
@@ -15,10 +20,11 @@ args = parser.parse_args()
 def levenstein(text1: str, text2: str) -> float:
     return 1 - nltk.edit_distance(text1, text2) / max(len(text1), len(text2))
 
-# TODO read from huggingface instead!
-bac_df = pd.read_csv('assets/romath-bac-train_ans.csv')
+bac_df = datasets.load_dataset('cosmadrian/romath', 'bac', split = 'train', token = HF_TOKEN)
+bac_df = pd.DataFrame(bac_df)
 bac_df = bac_df[bac_df['answer'] == 'Proof'].reset_index(drop = True)
-comps_df = pd.read_csv('assets/romath-comps-train_ans.csv')
+comps_df = datasets.load_dataset('cosmadrian/romath', 'comps', split = 'train', token = HF_TOKEN)
+comps_df = pd.DataFrame(comps_df)
 comps_df = comps_df[comps_df['answer'] == 'Proof'].reset_index(drop = True)
 
 all_solutions = pd.concat([bac_df, comps_df]).reset_index(drop = True)
