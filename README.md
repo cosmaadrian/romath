@@ -17,3 +17,9 @@ python evaluate.py --pred_file results/Qwen-Qwen2-1.5B-Instruct_bac_2_0.5.csv --
 ```
 python evaluate/compute_metrics.py --input_dir results/ --output_dir metrics/
 ```
+
+
+TODO
+
+- [ ] Run evaluation with the judge for all predictions
+- [ ] Run predictions with translated versions of a couple of models (math ones?)

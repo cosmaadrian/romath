@@ -5,6 +5,7 @@ results/
 metrics/
 wandb/
 notebooks/
+experiments/slurm-*.out
 slurm-*.out
 
 # Byte-compiled / optimized / DLL files

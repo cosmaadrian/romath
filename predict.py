@@ -4,6 +4,7 @@
     Outputs a .csv file with the predictions.
 """
 import pandas as pd
+import glob
 from collections import defaultdict
 import numpy as np
 np.random.seed(42)
@@ -14,13 +15,13 @@ import torch
 import os
 import tqdm
 import pprint
+import math
 
 from copy import deepcopy
 from evaluate.utils import complete_prompts
 from peft import AutoPeftModelForCausalLM
 
 import transformers
-from transformers import pipeline
 from transformers import AutoModelForCausalLM
 from evaluate.prompts.prediction_prompt import PROMPT
 
@@ -29,15 +30,23 @@ parser = argparse.ArgumentParser(description='Predict on dataset')
 parser.add_argument('--model', type = str, default = 'Qwen/Qwen2-1.5B-Instruct', help = 'Model name')
 parser.add_argument('--dataset', type = str, default = 'bac', help = 'Dataset name. (synthetic / bac / comps)')
 parser.add_argument('--output', type = str, default = 'predictions/', help = 'Output folder.')
+parser.add_argument('--batch_size', type = int, default = 1, help = 'Batch size.')
 
 parser.add_argument('--shots', type = int, default = 0, help = 'Number of examples in the prompt.')
-parser.add_argument('--k', type = int, default = 1, help = 'Number of predictions to make (for acc@k).')
 parser.add_argument('--temperature', type = float, default = 0.0, help = 'Temperature of model.')
 args = parser.parse_args()
 
 print("Running predictions for", args.__dict__)
 
 HF_TOKEN = os.environ.get('HF_TOKEN', None)
+
+def compute_max_length_power_of_two(dataset, tokenizer):
+    max_length = 0
+    for sample in tqdm.tqdm(dataset, total = len(dataset), desc = f"Computing max length for cosmadrian/romath-{args.dataset}"):
+        content = f"\n### Soluția este:\n{sample['solution']}"
+        tokens = tokenizer.encode(content, add_special_tokens = False)
+        max_length = max(max_length, len(tokens))
+    return 2**(math.ceil(math.log(max_length, 2)))
 
 def populate_few_shot(template, train_dataset, shots = 0):
     """
@@ -63,7 +72,7 @@ def populate_few_shot(template, train_dataset, shots = 0):
         })
 
         content = f"\n### Soluția este:\n{example['solution']}"
-        if example['answer'] != 'Proof':
+        if 'answer' in example and example['answer'] != 'Proof':
             content = f"\n### Soluția este:\n{example['solution']}. Răspunsul final este: \\boxed{{{example['answer']}}}"
 
         shot_list.append({
@@ -77,13 +86,16 @@ def populate_few_shot(template, train_dataset, shots = 0):
 is_fine_tuned = os.path.exists(args.model)
 
 if is_fine_tuned:
+    checkpoint_name = glob.glob(args.model + '/*')[0]
+
     model = AutoPeftModelForCausalLM.from_pretrained(
-        args.model,
+        checkpoint_name,
         token = HF_TOKEN,
         device_map = "auto",
         load_in_8bit = True,
         trust_remote_code = True
     )
+    tokenizer = transformers.AutoTokenizer.from_pretrained(checkpoint_name, token = HF_TOKEN)
 else:
     model = AutoModelForCausalLM.from_pretrained(
         args.model,
@@ -93,9 +105,10 @@ else:
         trust_remote_code = True
     )
 
-tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, token = HF_TOKEN)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, token = HF_TOKEN)
 
-text_generator = pipeline("text-generation", model = model, tokenizer = tokenizer)
+tokenizer.pad_token_id = tokenizer.eos_token_id
+tokenizer.padding_side = "left"
 
 # Load dataset
 train_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 'train')
@@ -103,33 +116,74 @@ test_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 
 
 outputs = defaultdict(list)
 
-for i, example in enumerate(tqdm.tqdm(test_dataset, total = len(test_dataset), position = 0)):
+max_length = min(compute_max_length_power_of_two(test_dataset, tokenizer), 2048)
+print("Computed max length:", max_length)
+
+message_batch = []
+for i, example in enumerate(tqdm.tqdm(test_dataset, total = len(test_dataset))):
     question = example['problem']
     solution = example['solution']
-
     messages = complete_prompts(PROMPT, problem_statement = question)
     messages = populate_few_shot(messages, train_dataset, args.shots)
 
-    responses = []
-    for j in tqdm.tqdm(range(args.k), position = 1, leave = i == len(test_dataset) - 1):
-        response = text_generator(
-            messages,
-            do_sample = True, max_new_tokens = 2048, temperature = args.temperature
+    message_batch.append({
+        'messages': messages,
+        'example': example
+    })
+
+    if len(message_batch) == args.batch_size:
+        all_messages = [b['messages'] for b in message_batch]
+        tokens = tokenizer.apply_chat_template(
+            all_messages,
+            max_length = 2048,
+            padding = 'max_length',
+            return_tensors = 'pt',
+            return_dict = True,
+            truncation = True,
+            add_generation_prompt = True
+        )
+        tokens = {k: v.to(model.device) for k, v in tokens.items()}
+
+        with torch.no_grad():
+            responses_ids = model.generate(
+                temperature = args.temperature,
+                do_sample = args.temperature > 0.0,
+                max_new_tokens = max_length,
+                top_p = 0.9 if args.temperature > 0.0 else None,
+                min_p = 0.1 if args.temperature > 0.0 else None,
+                top_k = None,
+                pad_token_id = tokenizer.eos_token_id,
+                **tokens
+            )
+
+        # remove the prompt part from the response_ids, keep only the response
+        responses_ids = responses_ids[:, tokens['input_ids'].shape[1]:]
+
+        responses = tokenizer.batch_decode(
+            responses_ids,
+            skip_special_tokens = True,
+            clean_up_tokenization_spaces = True,
         )
 
-        content = response[0]['generated_text'][-1]['content']
-        outputs['idx'].append(example['idx'])
-        outputs['model'].append(args.model)
-        outputs['dataset'].append(args.dataset)
-        outputs['domain'].append(example['domain'])
-        outputs['temperature'].append(args.temperature)
-        outputs['shots'].append(args.shots)
-        outputs['fine-tuned'].append(is_fine_tuned)
+        for j in range(args.batch_size):
+            content = responses[j]
+            example = message_batch[j]['example']
 
-        outputs['problem'].append(question)
-        outputs['solution'].append(solution)
-        outputs['answer'].append(example['answer'])
-        outputs['response'].append(content)
+            outputs['idx'].append(example['idx'])
+            outputs['model'].append(args.model)
+            outputs['dataset'].append(args.dataset)
+            outputs['domain'].append(example['domain'])
+            outputs['temperature'].append(args.temperature)
+            outputs['shots'].append(args.shots)
+            outputs['fine-tuned'].append(is_fine_tuned)
+
+            outputs['problem'].append(question)
+            outputs['solution'].append(solution)
+            if 'answer' in example:
+                outputs['answer'].append(example['answer'])
+            outputs['response'].append(content)
+
+        message_batch = []
 
 df = pd.DataFrame(outputs)
 

@@ -99,7 +99,8 @@ def compute_max_length_power_of_two(dataset, tokenizer):
             sample['answer'],
             tokenizer
         )
-        max_length = max(max_length, len(instruction))
+        tokens = tokenizer.encode(instruction, add_special_tokens = False)
+        max_length = max(max_length, len(tokens))
     return 2**(math.ceil(math.log(max_length, 2)))
 
 # Fine-tune model
