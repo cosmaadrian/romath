@@ -23,12 +23,13 @@ from peft import AutoPeftModelForCausalLM
 
 import transformers
 from transformers import AutoModelForCausalLM
-from evaluate.prompts.romanian_prediction_prompt import PROMPT
+from evaluate.prompts.english_prediction_prompt import PROMPT
 
+# translated_problem_unchanged_math,translated_solution_unchanged_math
 
 parser = argparse.ArgumentParser(description='Predict on dataset')
 parser.add_argument('--model', type = str, default = 'Qwen/Qwen2-1.5B-Instruct', help = 'Model name')
-parser.add_argument('--dataset', type = str, default = 'bac', help = 'Dataset name. (synthetic / bac / comps)')
+parser.add_argument('--dataset_path', type = str, default = '', help = 'Path to dataset.')
 parser.add_argument('--output', type = str, default = 'predictions/', help = 'Output folder.')
 parser.add_argument('--batch_size', type = int, default = 1, help = 'Batch size.')
 
@@ -40,91 +41,44 @@ print("Running predictions for", args.__dict__)
 
 HF_TOKEN = os.environ.get('HF_TOKEN', None)
 
+dataset_name = args.dataset_path.split('/')[-1].split('.')[0]
+
 def compute_max_length_power_of_two(dataset, tokenizer):
     max_length = 0
-    for sample in tqdm.tqdm(dataset, total = len(dataset), desc = f"Computing max length for cosmadrian/romath-{args.dataset}"):
-        content = f"\n### Soluția este:\n{sample['solution']}"
+    for i, sample in tqdm.tqdm(dataset.iterrows(), total = len(dataset), desc = f"Computing max length for {args.dataset_path}"):
+        content = f"\n### The solution is:\n{sample['solution']}"
         tokens = tokenizer.encode(content, add_special_tokens = False)
         max_length = max(max_length, len(tokens))
     return 2**(math.ceil(math.log(max_length, 2)))
 
-def populate_few_shot(template, train_dataset, shots = 0):
-    """
-        Populates a few shot template with examples from the dataset. The same example for all models / setups.
-    """
-    template = deepcopy(template)
+model = AutoModelForCausalLM.from_pretrained(
+    args.model,
+    token = HF_TOKEN,
+    device_map = "auto",
+    load_in_8bit = True,
+    trust_remote_code = True
+)
 
-    if shots == 0:
-        return template
-
-    system_prompt = [template[0]]
-    final_prompt = [template[-1]]
-
-    sampled_idxs = np.random.choice(len(train_dataset), shots, replace = False)
-    raw_shots = train_dataset.select(sampled_idxs)
-
-    shot_list = []
-    for i, example in enumerate(raw_shots):
-        shot_list.append({
-            "role": "user",
-            "content":
-            f"""Care este rezolvarea următoarei probleme?\n{example['problem']}"""
-        })
-
-        content = f"\n### Soluția este:\n{example['solution']}"
-        if 'answer' in example and example['answer'] != 'Proof':
-            content = f"\n### Soluția este:\n{example['solution']}. Răspunsul final este: \\boxed{{{example['answer']}}}"
-
-        shot_list.append({
-            "role": "assistant",
-            "content": content
-        })
-
-    final_template = system_prompt + shot_list + final_prompt
-    return final_template
-
-is_fine_tuned = os.path.exists(args.model)
-
-if is_fine_tuned:
-    checkpoint_name = glob.glob(args.model + '/*')[0]
-
-    model = AutoPeftModelForCausalLM.from_pretrained(
-        checkpoint_name,
-        token = HF_TOKEN,
-        device_map = "auto",
-        load_in_8bit = True,
-        trust_remote_code = True
-    )
-    tokenizer = transformers.AutoTokenizer.from_pretrained(checkpoint_name, token = HF_TOKEN)
-else:
-    model = AutoModelForCausalLM.from_pretrained(
-        args.model,
-        token = HF_TOKEN,
-        device_map = "auto",
-        load_in_8bit = True,
-        trust_remote_code = True
-    )
-
-    tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, token = HF_TOKEN)
+tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, token = HF_TOKEN)
 
 tokenizer.pad_token_id = tokenizer.eos_token_id
 tokenizer.padding_side = "left"
 
 # Load dataset
-train_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 'train')
-test_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 'test')
+test_dataset = pd.read_csv(args.dataset_path)
+test_dataset['problem'] = test_dataset['translated_problem_unchanged_math']
+test_dataset['solution'] = test_dataset['translated_solution_unchanged_math']
+print(test_dataset[['problem', 'solution']].sample(n = 5))
 
 outputs = defaultdict(list)
-
 max_length = min(compute_max_length_power_of_two(test_dataset, tokenizer), 2048)
 print("Computed max length:", max_length)
 
 message_batch = []
-for i, example in enumerate(tqdm.tqdm(test_dataset, total = len(test_dataset))):
+for i, (idx, example) in enumerate(tqdm.tqdm(test_dataset.iterrows(), total = len(test_dataset.index), desc = f"Predicting on {args.dataset_path}")):
     question = example['problem']
     solution = example['solution']
     messages = complete_prompts(PROMPT, problem_statement = question)
-    messages = populate_few_shot(messages, train_dataset, args.shots)
 
     message_batch.append({
         'messages': messages,
@@ -171,11 +125,10 @@ for i, example in enumerate(tqdm.tqdm(test_dataset, total = len(test_dataset))):
 
             outputs['idx'].append(example['idx'])
             outputs['model'].append(args.model)
-            outputs['dataset'].append(args.dataset)
+            outputs['dataset'].append(dataset_name)
             outputs['domain'].append(example['domain'])
             outputs['temperature'].append(args.temperature)
             outputs['shots'].append(args.shots)
-            outputs['fine-tuned'].append(is_fine_tuned)
 
             outputs['problem'].append(question)
             outputs['solution'].append(solution)
@@ -188,8 +141,6 @@ for i, example in enumerate(tqdm.tqdm(test_dataset, total = len(test_dataset))):
 df = pd.DataFrame(outputs)
 
 model_name = args.model.replace('/', '-')
-if is_fine_tuned:
-    model_name = os.path.basename(args.model)
 
 os.makedirs(args.output, exist_ok = True)
-df.to_csv(f"{args.output}/{model_name}_{args.dataset}_{args.shots}_{args.temperature}.csv", index = False)
+df.to_csv(f"{args.output}/{model_name}_{dataset_name}_{args.shots}_{args.temperature}.csv", index = False)

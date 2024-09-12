@@ -70,25 +70,26 @@ if args.evaluate_judge:
     results_df.to_csv(f'{args.output_dir}/judge_metrics.csv', index = False)
 
 else:
-    grouped_results = results.groupby(['model'])
+    grouped_results = results.groupby(['model', 'shots', 'dataset'])
 
     results = []
-    for model_name, group in grouped_results:
+    for (model_name, shots, dataset_name), group in grouped_results:
         overall_metrics = compute_classification_metrics(np.ones_like(group['judge_pred'].values), group['judge_pred'].values)
 
         # compute accuracy @ 1 and accuracy @ 10
         accuracy_at_1 = compute_accuracy_at_k(true = np.ones_like(group['judge_pred'].values), preds_df = group, k = 1)
-        accuracy_at_10 = compute_accuracy_at_k(true = np.ones_like(group['judge_pred'].values), preds_df = group, k = 10)
+        # accuracy_at_10 = compute_accuracy_at_k(true = np.ones_like(group['judge_pred'].values), preds_df = group, k = 10)
 
-        results.append({'metric_type': 'overall', 'model': model_name, **{**overall_metrics, **accuracy_at_1, **accuracy_at_10}})
+        # results.append({'metric_type': 'overall', 'model': model_name, **{**overall_metrics, **accuracy_at_1, **accuracy_at_10}})
+        results.append({'metric_type': 'overall', 'model': model_name, 'dataset': dataset_name, 'shots': shots,  **{**overall_metrics, **accuracy_at_1}})
 
         for domain, domain_group in group.groupby('domain'):
             normal_metrics = compute_classification_metrics(np.ones_like(domain_group['judge_pred'].values), domain_group['judge_pred'].values)
 
             # compute accuracy @ 1 and accuracy @ 10
             accuracy_at_1 = compute_accuracy_at_k(true = np.ones_like(domain_group['judge_pred'].values), preds_df = domain_group, k = 1)
-            accuracy_at_10 = compute_accuracy_at_k(true = np.ones_like(domain_group['judge_pred'].values), preds_df = domain_group, k = 10)
-            results.append({'metric_type': f'domain_{domain}', 'model': model_name, **{**normal_metrics, **accuracy_at_1, **accuracy_at_10}})
+            # accuracy_at_10 = compute_accuracy_at_k(true = np.ones_like(domain_group['judge_pred'].values), preds_df = domain_group, k = 10)
+            results.append({'metric_type': f'domain_{domain}', 'model': model_name, 'dataset': dataset_name, 'shots': shots, **{**normal_metrics, **accuracy_at_1}})
 
         results_df = pd.DataFrame(results)
         os.makedirs(args.output_dir, exist_ok = True)

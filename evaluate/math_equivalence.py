@@ -64,17 +64,7 @@ def _fix_sqrt(string):
         return string
 
     string = re.sub(r'sqrt\(([^)]*)\)', r'\\sqrt{\1}', string)
-
-    splits = string.split("\\sqrt")
-    new_string = splits[0]
-    for split in splits[1:]:
-        if split[0] != "{":
-            a = split[0]
-            new_substr = "\\sqrt{" + a + "}" + split[1:]
-        else:
-            new_substr = "\\sqrt" + split
-        new_string += new_substr
-    return new_string
+    return string
 
 def _strip_string(string):
     original_string = string
@@ -284,8 +274,11 @@ def is_equivalent(str1, str2, verbose = False):
 
         return ss1 == ss2
     except Exception as e:
-        print(e)
-        print(traceback.format_exc())
+        # print("####################################")
+        # print(str1, '################', str2)
+        # print(e)
+        # print(traceback.format_exc())
+        # exit(-1)
         return str1 == str2
 
 if __name__ == "__main__":
@@ -320,7 +313,7 @@ if __name__ == "__main__":
 
     s1 = '\\(\\lfloor\\sqrt{2}+\\sqrt{3}\\rfloor\\)'
     s2 = '[sqrt(2)+sqrt(3)]'
-    assert is_equivalent(s1, s2), s1 + " " + s2
+    assert is_equivalent(s1, s2, verbose = True), s1 + " " + s2
 
     s1 = '\\(x \\in\\{-1,1,-\\sqrt{2}, \\sqrt{2}\\}\\)'
     s2 = '{1, -1,-sqrt(2),sqrt(2)}'
