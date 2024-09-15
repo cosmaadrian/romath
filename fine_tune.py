@@ -13,7 +13,7 @@ import datasets
 import transformers
 
 from evaluate.utils import complete_prompts
-from evaluate.prompts.prediction_prompt import PROMPT
+from evaluate.prompts.romanian_prediction_prompt import PROMPT
 
 from functools import partial
 

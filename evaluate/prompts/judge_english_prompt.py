@@ -1,4 +1,3 @@
-# TODO
 PROMPT = [
     {
         "role": "system",

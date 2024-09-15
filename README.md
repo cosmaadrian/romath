@@ -17,17 +17,3 @@ python evaluate.py --pred_file results/Qwen-Qwen2-1.5B-Instruct_bac_2_0.5.csv --
 ```
 python evaluate/compute_metrics.py --input_dir results/ --output_dir metrics/
 ```
-
-TODO
-- [ x ] Run evaluation with the judge for all predictions
-    - run_judge.sh with everything uncommented
-    - run_judge2.sh with everything uncommented
-
-- [ x ] Run predictions with translated versions of a couple of models (math ones?)
-
-
-!!!!!!!!! TODO !!!!!!!!!!
-
-predict.py puts the same question on the whole batch, prediction is made with the right question but the judge does not
-
-!!!!!!!!!!!! FIX THE JUDGE AND RUN AGAIN EVERYTHING!!!!!!!!!!!!!

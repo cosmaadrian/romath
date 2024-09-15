@@ -1,16 +1,19 @@
-from evaluate.solution_judge import SolutionJudge
 import argparse
 import tqdm
+import numpy as np
 import os
+import datasets
+
 import pandas as pd
+from evaluate.solution_judge import SolutionJudge
+
 
 parser = argparse.ArgumentParser(description = 'Use the judge to get scores.')
 parser.add_argument('--pred_file', type = str, help = 'Input path for the .csv files with model-provided solutions.')
 parser.add_argument('--judge_model', default = 'Qwen/Qwen2-1.5B-Instruct', type = str, help = 'Hugging Face model name for the judge.')
 parser.add_argument('--prompt_lang', default = 'ro', type = str, help = 'Judge system prompt language.')
 parser.add_argument('--output', default = 'results/', type = str, help = 'Output folder path for the .csv files with scores.')
-parser.add_argument('--dataset', default = 'bac', type = str, help = 'Dataset name. (synthetic / bac / comps)')
-parser.add_argument('--translated_path', default = None, type = str, help = 'Path to translated dataset with NLLB-3.3B.')
+parser.add_argument('--translated', action = 'store_true', help = 'Is it translated?')
 args = parser.parse_args()
 
 HF_TOKEN = os.environ.get('HF_TOKEN', None)
@@ -39,18 +42,35 @@ if os.path.exists(output_filename):
 
 judge = SolutionJudge(args.judge_model, prompt = args.prompt_lang)
 
+dataset_name = dataset
+
 # TODO this is a hack, remove it later!
-if args.translated_path is not None:
-    translated_df = pd.read_csv(args.translated_path)
+if args.translated:
+    path = '/export/home/acs/prof/ioan_adrian.cosma/romath-competitions/translated/'
+
+    if dataset_name == 'bac':
+        path += 'romath-bac-test_model_nllb-200-3.3B.csv'
+    else:
+        path += 'romath-comps-test_model_nllb-200-3.3B.csv'
+
+    translated_df = pd.read_csv(path)
+
+    translated_df = translated_df[['idx', 'translated_problem_unchanged_math', 'translated_solution_unchanged_math']]
     prediction_df = pd.merge(prediction_df, translated_df, on = 'idx')
     prediction_df['problem'] = prediction_df['translated_problem_unchanged_math']
     prediction_df['solution'] = prediction_df['translated_solution_unchanged_math']
 else:
-    test_dataset = datasets.load_dataset('cosmadrian/romath', args.dataset, split = 'test')
+    test_dataset = datasets.load_dataset('cosmadrian/romath', dataset_name, split = 'test')
+
     problem_dict = {row['idx']: row['problem'] for row in test_dataset}
     solution_dict = {row['idx']: row['solution'] for row in test_dataset}
-    prediction_df['problem'] = prediction_df['idx'].map(problem_dict)
-    prediction_df['solution'] = prediction_df['idx'].map(solution_dict)
+
+    good_problems = pd.DataFrame(problem_dict.items(), columns = ['idx', 'problem'])
+    good_solutions = pd.DataFrame(solution_dict.items(), columns = ['idx', 'solution'])
+
+    prediction_df = prediction_df.drop(columns = ['problem', 'solution'])
+    prediction_df = pd.merge(prediction_df, good_problems, on = 'idx')
+    prediction_df = pd.merge(prediction_df, good_solutions, on = 'idx')
 
 prediction_df['judge_pred'] = None
 
