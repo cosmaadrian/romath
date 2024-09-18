@@ -46,7 +46,7 @@ dataset_name = dataset
 
 # TODO this is a hack, remove it later!
 if args.translated:
-    path = '/export/home/acs/prof/ioan_adrian.cosma/romath-competitions/translated/'
+    path = './translated/'
 
     if dataset_name == 'bac':
         path += 'romath-bac-test_model_nllb-200-3.3B.csv'
