@@ -18,7 +18,7 @@
 <div>
   <div align="center">
     
-  [📜 Arxiv Link]() | [🤗 Huggingface Dataset](https://huggingface.co/datasets/cosmadrian/romath)
+  [📜 Arxiv Link](https://arxiv.org/abs/2409.11074) | [🤗 Huggingface Dataset](https://huggingface.co/datasets/cosmadrian/romath)
   </div>
 </div>
 
@@ -57,13 +57,17 @@ For constructing the Judge Dataset (i.e., Table 3), run the `evaluate/make_judge
 ## <a name="citation"></a> 📖 Citation
 If you found our work useful, please cite our paper:
 
-[RoMath: A Mathematical Reasoning Benchmarking Suite from Problem Descriptions in 🇷🇴 Romanian 🇷🇴]()
+[RoMath: A Mathematical Reasoning Benchmarking Suite from Problem Descriptions in 🇷🇴 Romanian 🇷🇴](https://arxiv.org/abs/2409.11074)
 
 ```
-@InProceedings{cosma24romath,
-  author="Cosma, Adrian and Bucur, Ana-Maria and Radoi, Emilian",
-  title="RoMath: A Mathematical Reasoning Benchmarking Suite from Problem Descriptions in Romanian",
-  year="2024",
+@misc{cosma2024romath,
+      title={RoMath: A Mathematical Reasoning Benchmark in Romanian}, 
+      author={Adrian Cosma and Ana-Maria Bucur and Emilian Radoi},
+      year={2024},
+      eprint={2409.11074},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2409.11074}, 
 }
 ```
 
