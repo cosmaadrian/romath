@@ -42,7 +42,7 @@ python predict.py --model <hf_model_name> --dataset [bac|comps|synthetic] --temp
 
 ```
 # Evaluate the predictions of a model using a judge model.
-python evaluate.py --pred_file results/Qwen-Qwen2-1.5B-Instruct_bac_2_0.5.csv --judge_model <hf_model_name> --output results/
+python evaluate.py --pred_file predictions/Qwen-Qwen2-1.5B-Instruct_bac_2_0.5.csv --judge_model <hf_model_name> --output results/
 ```
 
 ```
