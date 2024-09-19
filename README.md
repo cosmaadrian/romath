@@ -57,7 +57,7 @@ For constructing the Judge Dataset (i.e., Table 3), run the `evaluate/make_judge
 ## <a name="citation"></a> 📖 Citation
 If you found our work useful, please cite our paper:
 
-[RoMath: A Mathematical Reasoning Benchmarking Suite from Problem Descriptions in 🇷🇴 Romanian 🇷🇴](https://arxiv.org/abs/2409.11074)
+[RoMath: A Mathematical Reasoning Benchmark in 🇷🇴 Romanian 🇷🇴](https://arxiv.org/abs/2409.11074)
 
 ```
 @misc{cosma2024romath,
