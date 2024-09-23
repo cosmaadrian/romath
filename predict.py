@@ -177,8 +177,8 @@ for i, example in enumerate(tqdm.tqdm(test_dataset, total = len(test_dataset))):
             outputs['shots'].append(args.shots)
             outputs['fine-tuned'].append(is_fine_tuned)
 
-            outputs['problem'].append(question)
-            outputs['solution'].append(solution)
+            outputs['problem'].append(example['problem'])
+            outputs['solution'].append(example['solution'])
             if 'answer' in example:
                 outputs['answer'].append(example['answer'])
             outputs['response'].append(content)
