@@ -1,4 +1,5 @@
 checkpoints-*/
+checkpoints/
 predictions/
 predictions_judges/
 results/
