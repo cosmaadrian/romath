@@ -169,6 +169,8 @@ if __name__ == '__main__':
     dataset_df = pd.read_csv(args.dataset)
     dataset_df = translate_romath(dataset_df, model_name = args.model)
 
+    # TODO add translation with an LLM.
+
     os.makedirs('translated', exist_ok = True)
     basename = os.path.basename(args.dataset)
 

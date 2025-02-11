@@ -1,8 +1,13 @@
-checkpoints/
+checkpoints-*/
 predictions/
 predictions_judges/
 results/
 metrics/
+metrics2/
+predictions_translated/
+results-translated/
+results.old
+results2/
 wandb/
 notebooks/
 experiments/slurm-*.out
