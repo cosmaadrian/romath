@@ -2,6 +2,7 @@ checkpoints-*/
 checkpoints/
 predictions/
 predictions_judges/
+predictions_reasoning/
 results/
 metrics/
 metrics2/
@@ -13,7 +14,7 @@ wandb/
 notebooks/
 experiments/slurm-*.out
 slurm-*.out
-
+._.
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -8,6 +8,7 @@ import math
 import tqdm
 import pprint
 import argparse
+import glob
 
 import datasets
 import transformers
@@ -30,6 +31,7 @@ parser.add_argument('--model', type = str, default = 'Qwen/Qwen2-1.5B-Instruct',
 parser.add_argument('--output', type = str, default = 'checkpoints-sft/', help = 'Output folder.')
 
 parser.add_argument('--batch_size', type = int, default = 16)
+parser.add_argument('--seed', type = int, default = 42)
 
 args = parser.parse_args()
 print("Running fine-tuning with", args.__dict__)
@@ -38,6 +40,14 @@ os.environ["WANDB_PROJECT"] = "romath"
 os.environ["WANDB_RUN_GROUP"] = 'sft'
 
 run_slug = f'{args.model.replace("/", "-")}-sft'
+
+# bug from huggingface lol
+path = args.output + run_slug
+checkpoint = glob.glob(path + '/*')[0]
+tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, token = HF_TOKEN)
+tokenizer.save_pretrained(checkpoint)
+
+exit(0)
 
 def make_instruction(problem_statement, solution, answer, tokenizer):
     messages = complete_prompts(PROMPT, problem_statement = problem_statement)
@@ -81,18 +91,21 @@ for dataset in dataset_names:
     ds_test = datasets.load_dataset('cosmadrian/romath', dataset, split = 'test', token = HF_TOKEN)
 
     if 'synthetic' in dataset:
-        ds_train = ds_train.shuffle(seed = 42).select(range(5000))
+        ds_train = ds_train.shuffle(seed = args.seed).select(range(200))
         ds_train = ds_train.map(lambda x: {'problem': x['problem'], 'solution': x['solution'], 'answer': x['solution']})
-        ds_test = ds_test.shuffle(seed = 42).select(range(500))
+        ds_test = ds_test.shuffle(seed = args.seed).select(range(500))
         ds_test = ds_test.map(lambda x: {'problem': x['problem'], 'solution': x['solution'], 'answer': x['solution']})
+    else:
+        ds_train = ds_train.shuffle(seed = args.seed)
+        ds_test = ds_test.shuffle(seed = args.seed)
 
     train_datasets.append(ds_train)
     test_datasets.append(ds_test)
 
-train_dataset = datasets.concatenate_datasets(train_datasets).shuffle(seed = 42)
+train_dataset = datasets.concatenate_datasets(train_datasets).shuffle(seed = args.seed)
 train_dataset = train_dataset.map(lambda x: format_instructions(x, tokenizer), batched = True)
 
-test_dataset = datasets.concatenate_datasets(test_datasets).shuffle(seed = 42)
+test_dataset = datasets.concatenate_datasets(test_datasets).shuffle(seed = args.seed)
 test_dataset = test_dataset.map(lambda x: format_instructions(x, tokenizer), batched = True)
 # Load dataset
 
@@ -114,7 +127,7 @@ training_args = SFTConfig(
     per_device_train_batch_size = args.batch_size,
     per_device_eval_batch_size = args.batch_size,
 
-    num_train_epochs = 1,
+    num_train_epochs = 2,
     weight_decay = 0.01,
 
     bf16 = True,
