@@ -41,13 +41,12 @@ os.environ["WANDB_RUN_GROUP"] = 'sft'
 
 run_slug = f'{args.model.replace("/", "-")}-sft'
 
-# bug from huggingface lol
-path = args.output + run_slug
-checkpoint = glob.glob(path + '/*')[0]
-tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, token = HF_TOKEN)
-tokenizer.save_pretrained(checkpoint)
-
-exit(0)
+# bug from huggingface lol, need to manually save the tokenizer in the same directory, otherwise GRPO doesn't work?
+# path = args.output + run_slug
+# checkpoint = glob.glob(path + '/*')[0]
+# tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, token = HF_TOKEN)
+# tokenizer.save_pretrained(checkpoint)
+# exit(0)
 
 def make_instruction(problem_statement, solution, answer, tokenizer):
     messages = complete_prompts(PROMPT, problem_statement = problem_statement)
