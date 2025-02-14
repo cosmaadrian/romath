@@ -44,7 +44,7 @@ test_dataset = datasets.load_dataset('cosmadrian/romath', subset, split = 'test'
 
 ## <a name="repro"></a> ♻️ Reproducing the Results
 
-### Generating your own split for `RoMath-Synthetic`
+### Generating your own split for _Synthetic_
 While a pre-generated split for RoMath-Synthetic is provided for convenience on [🤗 HuggingFace](https://huggingface.co/datasets/cosmadrian/romath), you can generate your own problems using the [original DeepMind](https://github.com/google-deepmind/mathematics_dataset) code with key phrases translated.
 
 See [romath-synthetic/](romath-synthetic/) directory for instructions.
@@ -77,6 +77,20 @@ python evaluate/compute_metrics.py --input_dir results/ --output_dir metrics/
 For translation, use the `translate.py` python script, alongside the `predict_translated.py` script.
 
 For constructing the Judge Dataset (i.e., Table 3), run the `evaluate/make_judge_dataset.py` with the appropriate arguments and run `evaluate_judge.py` script.
+
+### GRPO Training
+
+For training with rewards, first train an SFT model on _Baccalaureate_ and _Competitions_ using a "reasoning" format like `<raționament>...</raționament><răspuns>...</răspuns>`, like so:
+
+```
+python sft_everything.py --batch_size 4 --model meta-llama/Llama-3.2-1B-Instruct --seed 42
+```
+
+Afterwards, train using GRPO (only correctness reward and strict_format reward), like so (adjust the parameters in the script to suit your hardware capabilities):
+
+```
+python grpo.py --batch_size 1 --model checkpoints-sft/meta-llama-Llama-3.2-1B-Instruct-sft/checkpoint-246/ --seed 42
+```
 
 ## <a name="citation"></a> 📖 Citation
 If you found our work useful, please cite our paper:
