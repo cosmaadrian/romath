@@ -1,5 +1,5 @@
 <h1 align="center"><span style="font-weight:normal">RoMath: A Mathematical Reasoning Benchmark in Romanian</h1>
-
+<h2 align="center"> Accepted in MathNLP 2025 <br> The 2025 Conference on Empirical Methods in Natural Language Processing <br> EMNLP 2025</h2>
 <div align="center">
 
 [Adrian Cosma](https://scholar.google.com/citations?user=cdYk_RUAAAAJ&hl=en), [Ana-Maria Bucur](https://scholar.google.com/citations?user=TQuQ5IAAAAAJ&hl=en), [Emilian Radoi](https://scholar.google.com/citations?user=yjtWIf8AAAAJ&hl=en)
@@ -19,7 +19,7 @@
 <div>
   <div align="center">
 
-  [📜 Arxiv Link](https://arxiv.org/abs/2409.11074) | [🤗 Huggingface Dataset](https://huggingface.co/datasets/cosmadrian/romath)
+  [📜 Arxiv Link](https://arxiv.org/abs/2409.11074) | [🤗 Huggingface Dataset](https://huggingface.co/datasets/cosmadrian/romath) | [🪧 Math NLP Poster](https://docs.google.com/presentation/d/1q-g3Tf2t2TLIlb3TpVpYsWqs7Pp0M2tJRT-p3Ue71XY/edit?usp=sharing)
   </div>
 </div>
 
